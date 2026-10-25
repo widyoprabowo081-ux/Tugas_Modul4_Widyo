@@ -1,4 +1,3 @@
-#Widyo Prabowo F5212520068
 import tkinter.messagebox as messagebox
 from models.buku_models import BukuModel
 from Views.buku_view import BukuView
@@ -9,69 +8,62 @@ class BukuController:
         self.model = BukuModel()
         self.view = BukuView()
 
-        # Binding (mengikat) tombol di View dengan fungsi di Controller
-        self.view.btn_simpan.configure(command=self.simpan_data)
+        # Binding tombol-tombol yang ada di View
+        if hasattr(self.view, 'btn_simpan'):
+            self.view.btn_simpan.configure(command=self.simpan_data)
         
-        # --- TAMBAHAN TUGAS 1: Binding tombol Hapus dan Perbarui ---
-        # Pastikan nama tombol di file buku_view.py adalah btn_hapus dan btn_perbarui
-        if hasattr(self.view, 'btn_hapus'):
-            self.view.btn_hapus.configure(command=self.hapus_data)
-        if hasattr(self.view, 'btn_perbarui'):
-            self.view.btn_perbarui.configure(command=self.perbarui_data)
+        # Binding tombol Hapus dan Perbarui
+        self.view.btn_delete.configure(command=self.hapus_data)
+        self.view.btn_update.configure(command=self.perbarui_data)
 
-        # Memuat data ke tabel saat aplikasi pertama kali dibuka
+        # Memuat data ke tabel saat aplikasi pertama kali dijalankan
         self.muat_data_tabel()
 
     def muat_data_tabel(self):
-        # Mengosongkan tabel di View terlebih dahulu
+        # Membersihkan data tabel di tampilan saat ini
         for item in self.view.tabel.get_children():
             self.view.tabel.delete(item)
 
-        # Mengambil data dari Model (Database)
+        # Mengambil data dari database melalui model
         data_buku = self.model.get_all_buku()
 
-        # Memasukkan data baru ke dalam tabel View
+        # Memasukkan data ke dalam tabel view
         for buku in data_buku:
+            # Menggunakan struktur dictionary dari hasil fetch MySQL
             self.view.tabel.insert("", "end", values=(buku['id_buku'], buku['judul'], buku['penulis'], buku['tahun_terbit']))
 
     def simpan_data(self):
-        # Mengambil teks dari input di View
+        # Mengambil nilai dari form input
         judul = self.view.entry_judul.get()
         penulis = self.view.entry_penulis.get()
         tahun = self.view.entry_tahun.get()
 
-        # Validasi Form Kosong
+        # Validasi form kosong
         if not judul or not penulis or not tahun:
             messagebox.showwarning("Peringatan", "Semua kolom form harus diisi!")
             return
 
-        # Mengirim data ke Model untuk disimpan
+        # Mengirim data ke model untuk disimpan
         berhasil = self.model.create_buku(judul, penulis, tahun)
-
         if berhasil:
             messagebox.showinfo("Sukses", "Data buku berhasil disimpan!")
             self.bersihkan_form()
             self.muat_data_tabel()
         else:
-            messagebox.showerror("Error", "Terjadi kesalahan saat menyimpan data.")
+            messagebox.showerror("Error", "Gagal menyimpan data buku.")
 
-    # --- TAMBAHAN TUGAS 1: Fungsi Hapus Data ---
     def hapus_data(self):
-        # Mengambil item/baris yang dipilih pengguna di tabel GUI
+        # Mengambil baris tabel yang diklik pengguna
         selected_item = self.view.tabel.selection()
-        
         if not selected_item:
             messagebox.showwarning("Peringatan", "Pilih data di tabel yang ingin dihapus terlebih dahulu!")
             return
             
-        # Mengambil id_buku dari baris yang dipilih (id_buku ada di indeks 0)
-        item_values = self.view.tabel.item(selected_item[0], "values")
-        id_buku = item_values[0]
+        # Mengambil id_buku dari baris yang dipilih (indeks 0)
+        id_buku = self.view.tabel.item(selected_item[0], "values")[0]
         
-        # Konfirmasi penghapusan
         konfirmasi = messagebox.askyesno("Konfirmasi", "Apakah Anda yakin ingin menghapus data buku ini?")
         if konfirmasi:
-            # Pastikan fungsi delete_buku sudah kamu buat di file buku_model.py
             berhasil = self.model.delete_buku(id_buku) 
             if berhasil:
                 messagebox.showinfo("Sukses", "Data buku berhasil dihapus!")
@@ -80,29 +72,26 @@ class BukuController:
             else:
                 messagebox.showerror("Error", "Terjadi kesalahan saat menghapus data.")
 
-    # --- TAMBAHAN TUGAS 1: Fungsi Perbarui Data ---
     def perbarui_data(self):
-        # Mengambil item/baris yang dipilih pengguna di tabel GUI
+        # Mengambil baris tabel yang diklik pengguna
         selected_item = self.view.tabel.selection()
-        
         if not selected_item:
             messagebox.showwarning("Peringatan", "Pilih data di tabel yang ingin diperbarui terlebih dahulu!")
             return
             
-        # Mengambil id_buku dari baris yang dipilih
-        item_values = self.view.tabel.item(selected_item[0], "values")
-        id_buku = item_values[0]
+        # Mengambil id_buku dari baris yang dipilih (indeks 0)
+        id_buku = self.view.tabel.item(selected_item[0], "values")[0]
         
-        # Mengambil teks dari input form
+        # Mengambil nilai baru dari form input
         judul = self.view.entry_judul.get()
         penulis = self.view.entry_penulis.get()
         tahun = self.view.entry_tahun.get()
 
         if not judul or not penulis or not tahun:
-            messagebox.showwarning("Peringatan", "Pilih data di tabel, lalu isi perubahan di form!")
+            messagebox.showwarning("Peringatan", "Isi perubahan data di form terlebih dahulu!")
             return
 
-        # Pastikan fungsi update_buku sudah kamu buat di file buku_model.py
+        # Mengirim data pembaruan ke model
         berhasil = self.model.update_buku(id_buku, judul, penulis, tahun)
         if berhasil:
             messagebox.showinfo("Sukses", "Data buku berhasil diperbarui!")
@@ -111,11 +100,12 @@ class BukuController:
         else:
             messagebox.showerror("Error", "Terjadi kesalahan saat memperbarui data.")
 
-    # Fungsi bantuan untuk membersihkan form inputan
     def bersihkan_form(self):
+        # Mengosongkan form input setelah aksi selesai
         self.view.entry_judul.delete(0, 'end')
         self.view.entry_penulis.delete(0, 'end')
         self.view.entry_tahun.delete(0, 'end')
 
     def run(self):
-        self.view.mainloop() # Tanda titik (.) dihilangkan di sini
+        # Menjalankan mainloop aplikasi GUI
+        self.view.mainloop()

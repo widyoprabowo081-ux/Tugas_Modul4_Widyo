@@ -62,10 +62,6 @@ class AnggotaView(ctk.CTk):
 
         self.tabel.pack(fill="both", expand=True, padx=15, pady=10)
 
-        # Data Bayangan agar tabel tidak kosong saat di-screenshot
-        self.tabel.insert("", ctk.END, values=("1", "Widyo Prabowo F5212520068", "Jl. igusti Ngurahrai No. 9"))
-        self.tabel.insert("", ctk.END, values=("2", "Nayla salsabila saharuddin", "Jl. Angkasa  No. 5"))
-
 # Blok eksekusi untuk menguji tampilan grafis
 if __name__ == "__main__":
     app = AnggotaView()
