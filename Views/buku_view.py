@@ -42,6 +42,10 @@ class BukuView(ctk.CTk):
 
         self.btn_delete = ctk.CTkButton(self.frame_kiri, text="Hapus Data (Delete)", fg_color="red")
         self.btn_delete.pack(pady=10, padx=15, fill="x")
+        
+        # --- TAMBAHAN KODE BARU: TOMBOL LOGOUT (TUGAS 3) ---
+        self.btn_logout = ctk.CTkButton(self.frame_kiri, text="Logout", fg_color="gray", hover_color="darkgray")
+        self.btn_logout.pack(pady=10, padx=15, fill="x")
         # --------------------------------------------------
 
         # ==================================================

@@ -11,15 +11,23 @@ class BukuController:
         # Menampilkan informasi role pada judul jendela aplikasi
         self.view.title(f"Sistem Manajemen Perpustakaan - Mode: {self.user_role.upper()}")
         
-        # Binding Tombol simpan
+        # Binding Tombol Utama
         self.view.btn_simpan.configure(command=self.simpan_data)
         
-        # OTORISASI: Jika bukan admin, nonaktifkan form input dan Tombol simpan
+        # Binding Tombol Logout (Bagian dari Tugas 3)
+        self.view.btn_logout.configure(command=self.proses_logout)
+        
+        # OTORISASI: Jika bukan admin, nonaktifkan form input dan tombol
         if self.user_role != "admin":
             self.view.btn_simpan.configure(state="disabled", text="Akses Terkunci (Khusus Admin)")
             self.view.entry_judul.configure(state="disabled")
             self.view.entry_penulis.configure(state="disabled")
             self.view.entry_tahun.configure(state="disabled")
+            
+            # --- JAWABAN TUGAS 2 ---
+            # Mengunci tombol Update dan Delete jika pengguna adalah anggota
+            self.view.btn_update.configure(state="disabled")
+            self.view.btn_delete.configure(state="disabled")
             
         self.muat_data_tabel()
 
@@ -53,6 +61,16 @@ class BukuController:
             self.muat_data_tabel()
         else:
             messagebox.showerror("Error", "Gagal menyimpan data.")
+
+    # --- JAWABAN TUGAS 3 (Fungsi Logout) ---
+    def proses_logout(self):
+        # 1. Hancurkan/tutup jendela perpustakaan saat ini
+        self.view.destroy()
+        
+        # 2. Panggil kembali jendela Login
+        from controllers.auth_controller import AuthController
+        app_login = AuthController()
+        app_login.run()
 
     def run(self):
         self.view.mainloop()

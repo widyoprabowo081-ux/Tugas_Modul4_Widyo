@@ -1,40 +1,47 @@
+import mysql.connector
 import hashlib
-from config.database import Database  #[cite: 15]
 
 class UserModel:
     def __init__(self):
-        self.db = Database()
-        self.conn = self.db.get_connection()
-        self.table_name = "users"  #[cite: 15]
-
-    @staticmethod
-    def hash_password(password):
-        return hashlib.sha256(password.encode('utf-8')).hexdigest()  #[cite: 15]
+        # Konfigurasi koneksi ke database MySQL
+        try:
+            self.db = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="",  # Biarkan kosong jika default Laragon
+                database="perpustakaan"
+            )
+            self.cursor = self.db.cursor(dictionary=True)
+        except mysql.connector.Error as err:
+            print(f"Error Koneksi Database: {err}")
 
     def autentikasi(self, username, password):
-        if self.conn:
-            cursor = self.conn.cursor(dictionary=True)
-            password_hash = self.hash_password(password)  #[cite: 15]
-            query = f"SELECT id_user, username, role FROM {self.table_name} WHERE username = %s AND password = %s"  #[cite: 15]
-            cursor.execute(query, (username, password_hash))  #[cite: 15]
-            user = cursor.fetchone()  #[cite: 15]
-            cursor.close()
-            return user
-        return None  #[cite: 15]
+        try:
+            # Mengubah teks sandi yang diketik saat login menjadi hash SHA-256
+            hashed_password = hashlib.sha256(password.encode()).hexdigest()
+            
+            # Mencocokkan data di database
+            query = "SELECT * FROM users WHERE username = %s AND password = %s"
+            self.cursor.execute(query, (username, hashed_password))
+            
+            # Mengembalikan data pengguna jika cocok, atau None jika gagal
+            return self.cursor.fetchone()
+        except mysql.connector.Error as err:
+            print(f"Error Autentikasi: {err}")
+            return None
 
-    # Tugas 1: Fungsi Registrasi User Baru dengan Hash SHA-256
     def register_user(self, username, password, role="anggota"):
-        if self.conn:
-            cursor = self.conn.cursor()
-            password_hash = self.hash_password(password)  #[cite: 20]
-            query = f"INSERT INTO {self.table_name} (username, password, role) VALUES (%s, %s, %s)"
-            try:
-                cursor.execute(query, (username, password_hash, role))
-                self.conn.commit()
-                cursor.close()
-                return True
-            except Exception as e:
-                print(f"Error Register: {e}")
-                cursor.close()
-                return False
-        return False
+        try:
+            # Mengubah teks password baru menjadi hash SHA-256
+            hashed_password = hashlib.sha256(password.encode()).hexdigest()
+            
+            # Menyimpan data pengguna baru ke database
+            query = "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)"
+            values = (username, hashed_password, role)
+            
+            self.cursor.execute(query, values)
+            self.db.commit()
+            return True
+        except mysql.connector.Error as err:
+            print(f"Error Registrasi: {err}")
+            return False
