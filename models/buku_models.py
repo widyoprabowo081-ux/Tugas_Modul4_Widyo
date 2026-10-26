@@ -1,10 +1,15 @@
 from config.database import Database
 
+
 class BukuModel:
     def __init__(self):
-        self.db = Database()
-        self.conn = self.db.get_connection()
+        self.db = None
+        self.conn = None
         self.table_name = "buku"
+
+        db = Database()
+        self.db = db
+        self.conn = db.get_connection()
 
     def get_all_buku(self):
         if self.conn:
@@ -12,7 +17,8 @@ class BukuModel:
             query = f"SELECT * FROM {self.table_name}"
             cursor.execute(query)
             result = cursor.fetchall()
-            cursor.close()
+            if hasattr(cursor, "close"):
+                cursor.close()
             return result
         return []
 
@@ -23,7 +29,8 @@ class BukuModel:
             val = (judul, penulis, tahun_terbit)
             cursor.execute(query, val)
             self.conn.commit()
-            cursor.close()
+            if hasattr(cursor, "close"):
+                cursor.close()
             return True
         return False
 
@@ -34,7 +41,8 @@ class BukuModel:
             val = (judul, penulis, tahun_terbit, id_buku)
             cursor.execute(query, val)
             self.conn.commit()
-            cursor.close()
+            if hasattr(cursor, "close"):
+                cursor.close()
             return True
         return False
 
@@ -44,6 +52,7 @@ class BukuModel:
             query = f"DELETE FROM {self.table_name} WHERE id_buku = %s"
             cursor.execute(query, (id_buku,))
             self.conn.commit()
-            cursor.close()
+            if hasattr(cursor, "close"):
+                cursor.close()
             return True
         return False
