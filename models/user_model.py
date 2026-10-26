@@ -1,39 +1,58 @@
 import mysql.connector
 import hashlib
 
+
 class UserModel:
     def __init__(self):
+        self.db = None
+        self.conn = None
+        self.cursor = None
+
         try:
             self.db = mysql.connector.connect(
                 host="localhost",
                 user="root",
                 password="",
-                database="perpustakaan"
+                database="perpustakaan",
             )
+            self.conn = self.db
             self.cursor = self.db.cursor(dictionary=True)
         except mysql.connector.Error as err:
             self.db = None
+            self.conn = None
             self.cursor = None
             print(f"Error Koneksi Database: {err}")
 
     @staticmethod
     def hash_password(password):
-        # Metode statis untuk memenuhi pengujian unit hashing SHA-256
         return hashlib.sha256(password.encode()).hexdigest()
+
+    def _get_cursor(self):
+        cursor = getattr(self, "cursor", None)
+        if cursor is not None:
+            return cursor
+
+        conn = getattr(self, "conn", None) or getattr(self, "db", None)
+        if conn is None:
+            return None
+
+        try:
+            return conn.cursor(dictionary=True)
+        except Exception:
+            try:
+                return conn.cursor()
+            except Exception:
+                return None
 
     def autentikasi(self, username, password):
         try:
             hashed_password = self.hash_password(password)
             query = "SELECT * FROM users WHERE username = %s AND password = %s"
-            
-            # Mendukung cursor asli maupun mock dari unit test (model.conn)
-            cursor = getattr(self, 'cursor', None)
-            if not cursor and hasattr(self, 'conn') and self.conn:
-                cursor = self.conn.cursor(dictionary=True)
-                
-            if not cursor:
+
+            cursor = self._get_cursor()
+            if cursor is None:
                 return None
-                
+
             cursor.execute(query, (username, hashed_password))
             return cursor.fetchone()
         except Exception as err:
@@ -45,21 +64,17 @@ class UserModel:
             hashed_password = self.hash_password(password)
             query = "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)"
             values = (username, hashed_password, role)
-            
-            cursor = getattr(self, 'cursor', None)
-            if not cursor and hasattr(self, 'conn') and self.conn:
-                cursor = self.conn.cursor(dictionary=True)
-                
-            if not cursor:
+
+            cursor = self._get_cursor()
+            if cursor is None:
                 return False
-                
+
             cursor.execute(query, values)
-            
-            if hasattr(self, 'db') and self.db:
-                self.db.commit()
-            elif hasattr(self, 'conn') and self.conn:
-                self.conn.commit()
-                
+
+            conn = getattr(self, "conn", None) or getattr(self, "db", None)
+            if conn is not None:
+                conn.commit()
+
             return True
         except Exception as err:
             print(f"Error Registrasi: {err}")
