@@ -1,9 +1,8 @@
-import mysql.connector
+﻿import mysql.connector
 from mysql.connector import Error
 
 
 class Database:
-
     def __init__(self):
         self.host = "localhost"
         self.db_name = "perpustakaan"
@@ -21,6 +20,7 @@ class Database:
             )
             if self.conn.is_connected():
                 return self.conn
+            return None
         except Error as e:
             print(f"Koneksi Gagal: {e}")
             return None
