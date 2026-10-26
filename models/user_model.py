@@ -3,42 +3,44 @@ import hashlib
 
 class UserModel:
     def __init__(self):
-        # Konfigurasi koneksi ke database MySQL
         try:
             self.db = mysql.connector.connect(
                 host="localhost",
                 user="root",
-                password="",  # Biarkan kosong jika default Laragon
+                password="",
                 database="perpustakaan"
             )
             self.cursor = self.db.cursor(dictionary=True)
         except mysql.connector.Error as err:
+            # Penanganan agar tidak error saat dijalankan di GitHub Actions tanpa database aktif
+            self.db = None
+            self.cursor = None
             print(f"Error Koneksi Database: {err}")
 
+    @staticmethod
+    def hash_password(password):
+        # Metode statis untuk pengujian unit hashing SHA-256
+        return hashlib.sha256(password.encode()).hexdigest()
+
     def autentikasi(self, username, password):
+        if not self.cursor:
+            return None
         try:
-            # Mengubah teks sandi yang diketik saat login menjadi hash SHA-256
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()
-            
-            # Mencocokkan data di database
+            hashed_password = self.hash_password(password)
             query = "SELECT * FROM users WHERE username = %s AND password = %s"
             self.cursor.execute(query, (username, hashed_password))
-            
-            # Mengembalikan data pengguna jika cocok, atau None jika gagal
             return self.cursor.fetchone()
         except mysql.connector.Error as err:
             print(f"Error Autentikasi: {err}")
             return None
 
     def register_user(self, username, password, role="anggota"):
+        if not self.cursor:
+            return False
         try:
-            # Mengubah teks password baru menjadi hash SHA-256
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()
-            
-            # Menyimpan data pengguna baru ke database
+            hashed_password = self.hash_password(password)
             query = "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)"
             values = (username, hashed_password, role)
-            
             self.cursor.execute(query, values)
             self.db.commit()
             return True
