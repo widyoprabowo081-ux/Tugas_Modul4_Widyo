@@ -25,6 +25,7 @@ def test_autentikasi_pengguna_berhasil():
     model.conn.cursor.return_value = mock_cursor
 
     hasil = model.autentikasi("petugas", "admin123")
+    # tes 123
 
     assert hasil is not None
     assert hasil["username"] == "petugas"
