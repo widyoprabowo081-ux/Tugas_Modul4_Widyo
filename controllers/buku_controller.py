@@ -11,8 +11,12 @@ class BukuController:
         # Menampilkan informasi role pada judul jendela aplikasi
         self.view.title(f"Sistem Manajemen Perpustakaan - Mode: {self.user_role.upper()}")
         
-        # Binding Tombol Utama
+        # ==========================================
+        # PENEMPATAN NOMOR 1: Binding Tombol Utama
+        # ==========================================
         self.view.btn_simpan.configure(command=self.simpan_data)
+        self.view.btn_update.configure(command=self.perbarui_data)
+        self.view.btn_delete.configure(command=self.hapus_data)
         
         # Binding Tombol Logout (Bagian dari Tugas 3)
         self.view.btn_logout.configure(command=self.proses_logout)
@@ -61,6 +65,60 @@ class BukuController:
             self.muat_data_tabel()
         else:
             messagebox.showerror("Error", "Gagal menyimpan data.")
+
+    # ==========================================
+    # PENEMPATAN NOMOR 2: Fungsi Update & Delete
+    # ==========================================
+    def perbarui_data(self):
+        if self.user_role != "admin":
+            messagebox.showerror("Akses Ditolak", "Anda tidak memiliki izin untuk mengubah data!")
+            return
+
+        selected_item = self.view.tabel.selection()
+        if not selected_item:
+            messagebox.showwarning("Pilih Data", "Silakan pilih baris data di tabel terlebih dahulu!")
+            return
+
+        id_buku = self.view.tabel.item(selected_item)['values'][0]
+        judul = self.view.entry_judul.get()
+        penulis = self.view.entry_penulis.get()
+        tahun = self.view.entry_tahun.get()
+
+        if not judul or not penulis or not tahun:
+            messagebox.showwarning("Peringatan", "Semua kolom form harus diisi untuk update!")
+            return
+
+        if self.model.update_buku(id_buku, judul, penulis, tahun):
+            messagebox.showinfo("Sukses", "Data buku berhasil diperbarui!")
+            self.view.entry_judul.delete(0, 'end')
+            self.view.entry_penulis.delete(0, 'end')
+            self.view.entry_tahun.delete(0, 'end')
+            self.muat_data_tabel()
+        else:
+            messagebox.showerror("Error", "Gagal memperbarui data.")
+
+    def hapus_data(self):
+        if self.user_role != "admin":
+            messagebox.showerror("Akses Ditolak", "Anda tidak memiliki izin untuk menghapus data!")
+            return
+
+        selected_item = self.view.tabel.selection()
+        if not selected_item:
+            messagebox.showwarning("Pilih Data", "Silakan pilih baris data di tabel yang ingin dihapus!")
+            return
+
+        id_buku = self.view.tabel.item(selected_item)['values'][0]
+
+        konfirmasi = messagebox.askyesno("Konfirmasi", "Apakah Anda yakin ingin menghapus data buku ini?")
+        if konfirmasi:
+            if self.model.delete_buku(id_buku):
+                messagebox.showinfo("Sukses", "Data buku berhasil dihapus!")
+                self.view.entry_judul.delete(0, 'end')
+                self.view.entry_penulis.delete(0, 'end')
+                self.view.entry_tahun.delete(0, 'end')
+                self.muat_data_tabel()
+            else:
+                messagebox.showerror("Error", "Gagal menghapus data.")
 
     # --- JAWABAN TUGAS 3 (Fungsi Logout) ---
     def proses_logout(self):
